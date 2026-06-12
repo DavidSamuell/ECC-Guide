@@ -113,17 +113,17 @@ Commands:
 
 | Command | Purpose |
 |---|---|
-| `/ck:init` | Register the current project (auto-detects name, stack, goal; you confirm) |
-| `/ck:save` | Save session state: summary, where you left off, next steps, decisions, blockers |
-| `/ck:resume [name]` | Full briefing — run at the **start** of every session |
-| `/ck:list` | All registered projects |
-| `/ck:info [name]` | Quick snapshot, no follow-up |
-| `/ck:forget [name]` | Remove a project (asks to confirm) |
+| `/ck init` | Register the current project (auto-detects name, stack, goal; you confirm) |
+| `/ck save` | Save session state: summary, where you left off, next steps, decisions, blockers |
+| `/ck resume [name]` | Full briefing — run at the **start** of every session |
+| `/ck list` | All registered projects |
+| `/ck info [name]` | Quick snapshot, no follow-up |
+| `/ck forget [name]` | Remove a project (asks to confirm) |
 
 Never hand-edit `context.json` or `CONTEXT.md` — always go through the commands.
 
 > **Known caveat:** there's a reported issue where the auto-injection on SessionStart doesn't
-> reliably push content into context. Treat `/ck:resume` as a deliberate manual habit at the
+> reliably push content into context. Treat `/ck resume` as a deliberate manual habit at the
 > start of each session rather than assuming it happens invisibly.
 
 ### 3b. ECC hooks-runtime — automatic session summaries
@@ -361,7 +361,7 @@ On every `.py` edit, auto-run ruff + black + mypy so you never accumulate lint d
 | `~/.claude/CLAUDE.md` | **You, manually** (template below) | Global — every project |
 | `<repo>/.claude/CLAUDE.md` | `codebase-onboarding` skill (Part 4a) | This project only |
 
-Neither is created by `/ck:init` — that only writes ck's own `context.json`.
+Neither is created by `/ck init` — that only writes ck's own `context.json`.
 
 ### Global `~/.claude/CLAUDE.md` template
 
@@ -379,7 +379,7 @@ Neither is created by `/ck:init` — that only writes ck's own `context.json`.
 ## Context discipline
 - Keep under 10 MCPs enabled, under 80 tools active
 - /compact after research->plan and plan->implement transitions
-- /ck:save before ending any session
+- /ck save before ending any session
 
 ## Delegation
 - code-reviewer after every implementation
@@ -444,11 +444,11 @@ Merge of the SessionStart (ck), strategic-compact (PreToolUse), and Python quali
 
 ```text
 codebase-onboarding      # (on a scaffold) -> generates project CLAUDE.md
-/ck:init                 # register in Context Keeper
+/ck init                 # register in Context Keeper
 /ecc:update-codemaps     # generate docs/CODEMAPS/ for cheap future navigation
 /ecc:plan "first feature"
 # ...build with tdd-workflow, code-review, quality-gate...
-/ck:save                 # before you stop
+/ck save                 # before you stop
 git add -A && git commit # save the actual code
 ```
 
@@ -457,20 +457,20 @@ git add -A && git commit # save the actual code
 ```text
 # Same as new — the setup is additive and non-destructive
 "onboard me to this codebase"   # codebase-onboarding -> guide + CLAUDE.md
-/ck:init                        # register it
+/ck init                        # register it
 /ecc:update-codemaps            # map it
-/ck:save                        # save initial state
+/ck save                        # save initial state
 # next session:
-/ck:resume <project-name>       # caught up without re-reading everything
+/ck resume <project-name>       # caught up without re-reading everything
 /ecc:plan "first feature"       # codebase scan grounds Claude before coding
 ```
 
 ### Every subsequent session
 
 ```text
-/ck:resume <project-name>   # load context
+/ck resume <project-name>   # load context
 # ... work; /compact at phase boundaries ...
-/ck:save                    # save context
+/ck save                    # save context
 git commit                  # save code
 ```
 
@@ -489,7 +489,7 @@ do that thinking explicitly.
 |---|---|---|
 | Editor autosave | Your code, to disk, immediately | — |
 | `git commit` | Code history / changes | — |
-| `/ck:save` | Session context: summary, next steps, decisions, blockers | Code |
+| `/ck save` | Session context: summary, next steps, decisions, blockers | Code |
 | hooks-runtime Stop hook | Automatic session summary | Code |
 | `continuous-learning-v2` | Reusable patterns/instincts | Code |
 | `codebase-onboarding` | Project CLAUDE.md + onboarding guide | Code |

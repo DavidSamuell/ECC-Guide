@@ -222,7 +222,7 @@ opened it:
   aliases in `<root>/session-aliases.json`. All shared once the root is shared.
 
 So with a shared root, instincts learned in Claude Code show up when you open the repo in Cursor, and
-a `/ck:save` from one tool is resumable with `/ck:resume` in the other.
+a `/ck save` from one tool is resumable with `/ck resume` in the other.
 
 **The one real risk** (the reason ECC defaults to separating them): last-write-wins. If you run both
 tools on the **same project at the same time**, one can clobber the other's session summary. The fix
@@ -241,13 +241,13 @@ Even with the hook registered, the SessionStart auto-injection has historically 
 the safe habit is still to drive it manually:
 
 ```text
-/ck:init                 # register the project (run once, from either tool)
-/ck:resume <name>        # at the START of a session in either tool
-/ck:save                 # before you stop, in either tool
+/ck init                 # register the project (run once, from either tool)
+/ck resume <name>        # at the START of a session in either tool
+/ck save                 # before you stop, in either tool
 ```
 
-Because the context is keyed on the project's filesystem path, a `/ck:save` in Claude Code is
-resumable with `/ck:resume` in Cursor and vice versa — as long as the repo is at the same path and
+Because the context is keyed on the project's filesystem path, a `/ck save` in Claude Code is
+resumable with `/ck resume` in Cursor and vice versa — as long as the repo is at the same path and
 the data root is shared (Part 3a).
 
 **`ck` is not included in the ECC Cursor install** — copy it manually into both surfaces:
@@ -450,16 +450,16 @@ echo '{}' | node scripts/hooks/session-start.js | head -3
 Then, in Cursor chat:
 ```text
 "onboard me to this codebase"   # codebase-onboarding -> writes project rule
-/ck:init                        # register in Context Keeper
+/ck init                        # register in Context Keeper
 update-codemaps                 # docs/CODEMAPS/
 ```
 
 ### Every session
 
 ```text
-/ck:resume <project-name>       # safe habit even with sessionStart hook registered
+/ck resume <project-name>       # safe habit even with sessionStart hook registered
 # ... work ...
-/ck:save                        # before you stop — resumable from Claude Code too
+/ck save                        # before you stop — resumable from Claude Code too
 git commit                      # save code (ECC never saves code)
 ```
 
@@ -483,7 +483,7 @@ code-review + security-review   # before shipping
 | Rules | hierarchical markdown | `.mdc` with frontmatter + 4 activation modes |
 | Hooks | 8 native event types, automatic | native Hooks panel; ECC registers 16+ entries in `.cursor/hooks.json`; needs `core` profile + path symlink |
 | Auto format-on-edit | PostToolUse hook | hook fires; back it up with format-on-save + agent rule |
-| Memory auto-load | SessionStart hook (already flaky) | sessionStart hook fires; still safest to `/ck:resume` manually |
+| Memory auto-load | SessionStart hook (already flaky) | sessionStart hook fires; still safest to `/ck resume` manually |
 | continuous-learning-v2 | hook observer + daemon | hook-backed now; verify with `/instinct-status` |
 | Shared memory across both | — | yes, via shared `ECC_AGENT_DATA_HOME` + path/git-keyed stores (Part 3a) |
 | Slash commands | `/ecc:*` namespace | invoke by name; `multi-*` stubbed |
@@ -502,7 +502,7 @@ code-review + security-review   # before shipping
 - **Memory (shared across both tools):** keep Cursor and Claude Code on the **same** `ECC_AGENT_DATA_HOME`
   (don't set the Cursor-specific override). Copy `ck` manually — it is not part of the ECC install.
   `ck` is path-keyed and instincts are git-remote-keyed, so the same repo resolves to the same memory
-  in either tool. Drive `ck` manually (`/ck:resume` / `/ck:save`) and use the tools sequentially per
+  in either tool. Drive `ck` manually (`/ck resume` / `/ck save`) and use the tools sequentially per
   project, not concurrently.
 - **Context:** `codebase-onboarding` (writes project rule), `update-codemaps`
 - **Per-feature:** search-first → plan → tdd-workflow → code-review → security-review

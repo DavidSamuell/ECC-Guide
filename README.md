@@ -196,7 +196,6 @@ Verified names and what they actually do:
 | `search-first` | skill | Research-before-coding: verify current library/API behavior before writing | Start of any unfamiliar work |
 | `/ecc:plan "desc"` | command | Restates requirements, scans codebase for conventions to mirror, lists risks, writes `.claude/plans/*.plan.md`, **waits for your confirmation before any code**. Runs inline by default — does not need the planner subagent | Start of any non-trivial feature |
 | `/ecc:plan-prd "idea"` | command | Requirements-phase only. Writes `.claude/prds/*.prd.md`: problem statement, evidence, users, hypothesis, MVP, explicit out-of-scope, delivery milestones. Does **not** design the implementation — that's `/plan`'s job. Pass the output path to `/plan` for the how. | When scope is unclear, contested, or stakeholders need to align before solutioning |
-| `prp-prd` → `prp-plan` → `prp-implement` | commands | Legacy deep PRP pipeline. `prp-prd` runs a full interrogation PRD → `.claude/PRPs/*.prd.md`. `prp-plan` does deep codebase analysis (8 search categories, 5 execution traces, real code snippets) → `.claude/PRPs/plans/*.plan.md`. `prp-implement` executes with gated validation loops. Maximally thorough but heavy. | XL features needing a fully self-contained, pattern-rich plan; or when the implementer has no live codebase access |
 | `tdd-workflow` | skill | Interfaces first → failing tests (RED) → minimal code (GREEN) → refactor → 80% coverage | Implement phase |
 | `api-design` | skill | REST design, pagination, error responses | Building an endpoint |
 | `/ecc:code-review` | command | Delegates to `code-reviewer` agent — quality + maintainability | After implementing |
@@ -502,14 +501,6 @@ tdd-workflow
 ```
 Use when: scope needs defining first, multiple stakeholders, or medium-to-large feature with non-obvious trade-offs. The PRD is the gate — align on *what* before anyone codes *how*.
 
-**Path C — Deep (XL features, new subsystems, pattern-critical work)**
-```
-prp-prd                                   # full interrogation PRD → .claude/PRPs/*.prd.md
-prp-plan .claude/PRPs/name.prd.md         # codebase analysis → .claude/PRPs/plans/*.plan.md
-prp-implement .claude/PRPs/plans/name.plan.md   # gated implementation
-/ecc:pr
-```
-Use when: architectural change, new subsystem, or you need a maximally self-contained plan that captures every codebase pattern, naming convention, and gotcha so the implementer needs zero follow-up questions.
 
 Skip planning entirely only for trivial single-file changes. Heuristic: if you'd spend 2+ minutes thinking before coding, run at least Path A.
 

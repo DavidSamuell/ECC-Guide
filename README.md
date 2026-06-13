@@ -286,6 +286,7 @@ Run after implementation, before opening a PR:
 
 | Skill / command | What it does | When |
 |---|---|---|
+| `python-testing` | Reference skill for pytest patterns — fixture design, mocking, parametrization, coverage setup. Use **before** `tdd-workflow` if you're unsure how to structure tests for the feature; gives you the patterns to follow. Does not execute TDD itself. | When test structure is unclear — e.g. how to mock an ONNX model, parametrize phoneme inputs, or structure fixtures for DB-backed tokenizer tests |
 | `/ecc:code-review` | Delegates to `code-reviewer` agent — quality, maintainability, patterns | After every implementation |
 | `security-review` | OWASP-style checklist — secrets, injection, auth, input validation | Before any external-facing code ships |
 | `/ecc:quality-gate` | Verification gate: tests green, coverage ≥ 80%, lint clean | Final check before PR |

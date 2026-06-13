@@ -187,29 +187,132 @@ far cheaper on tokens than exploring fresh each time. Re-run after significant s
 
 ---
 
-## Part 5 — Skills & commands you invoke per feature/project
+## Part 5 — Per-feature workflow
 
-Verified names and what they actually do:
-
-| You type | Type | What it does | When |
-|---|---|---|---|
-| `search-first` | skill | Research-before-coding: verify current library/API behavior before writing | Start of any unfamiliar work |
-| `/ecc:plan "desc"` | command | Restates requirements, scans codebase for conventions to mirror, lists risks, writes `.claude/plans/*.plan.md`, **waits for your confirmation before any code**. Runs inline by default — does not need the planner subagent | Start of any non-trivial feature |
-| `/ecc:plan-prd "idea"` | command | Requirements-phase only. Writes `.claude/prds/*.prd.md`: problem statement, evidence, users, hypothesis, MVP, explicit out-of-scope, delivery milestones. Does **not** design the implementation — that's `/plan`'s job. Pass the output path to `/plan` for the how. | When scope is unclear, contested, or stakeholders need to align before solutioning |
-| `tdd-workflow` | skill | Interfaces first → failing tests (RED) → minimal code (GREEN) → refactor → 80% coverage | Implement phase |
-| `api-design` | skill | REST design, pagination, error responses | Building an endpoint |
-| `/ecc:code-review` | command | Delegates to `code-reviewer` agent — quality + maintainability | After implementing |
-| `security-review` | skill | OWASP-style checklist | Before shipping |
-| `/ecc:quality-gate` | command | Verification gate: tests green, coverage, lint clean | Final check |
-| `/ecc:pr` | command | Creates a GitHub PR from the current branch. Validates branch state, analyzes commit history for title/body, discovers PR templates, **auto-links `.claude/prds/` and `.claude/plans/` artifacts** in the PR body. Replaces manual `gh pr create`. | After implementation — the final step in any planning pipeline |
-| `/ecc:build-fix` | command | Delegates to `build-error-resolver` | On build failure |
-
-Skip every framework pack you don't use (Django, Spring Boot, Laravel, Quarkus, NestJS, etc.)
-and every non-Python language pack (cpp, perl, java, kotlin, rust, swift, php, arkts).
-
-The ML/AI-relevant skills are in their own section below, since they're project-dependent.
+A repeatable sequence for every non-trivial feature. Follow the sections in order.
 
 ---
+
+### Session start
+
+**First time in this project** (run once per project, not per session):
+
+```bash
+"onboard me to this codebase"    # codebase-onboarding → architecture guide + project CLAUDE.md
+/ck init                         # register project in Context Keeper
+/ecc:update-codemaps             # generate docs/CODEMAPS/ for token-cheap future navigation
+```
+
+**Every subsequent session** (run at the top of each session):
+
+```bash
+/ck resume <project-name>        # loads last summary, next steps, open decisions
+```
+
+**When to save and maintain context:**
+
+| Action | When |
+|---|---|
+| `/ck save` | Before ending every session — saves summary, where you left off, decisions, blockers |
+| `/ecc:update-codemaps` | After significant structural changes — new modules, renamed dirs, new entry points |
+
+---
+
+### 1. Research
+
+Run before planning when you're unsure of the best approach or need to find existing solutions. Skip for work you already understand well.
+
+| Skill | What it does | When to use | Requirements |
+|---|---|---|---|
+| `search-first` | Checks your repo first, then PyPI/npm, then GitHub, then MCP catalog — finds existing solutions before you write anything custom | Before building any utility or adding a dependency; when you're not sure if the solution already exists somewhere | `gh` CLI |
+| `documentation-lookup` | Fetches live library and API docs via Context7 MCP instead of relying on potentially stale training data | "How do I use library X or API Y?" — especially for packages with fast-moving APIs or version-specific behaviour | Context7 MCP configured |
+| `deep-research` | Multi-source web synthesis with citations via Firecrawl or Exa. Returns a structured report with sourced findings. | "What's the best approach to solve problem Z?" — architecture tradeoffs, technology evaluation, unfamiliar domains | Firecrawl or Exa MCP configured |
+
+**Suggested order when you need all three:**
+```
+search-first          # does something already solve this?
+documentation-lookup  # how exactly does the relevant library/API work?
+deep-research         # what's the best overall approach?
+```
+
+---
+
+### 2. Planning
+
+Always plan before implementing non-trivial work. Pick the path based on how clear the scope is.
+
+**Path A — scope is clear, work is non-trivial**
+
+"Scope is clear" means you know *what* needs to happen and there's nothing to debate — not that the implementation is simple. `/plan` still earns its keep by scanning the codebase for conventions to mirror and surfacing risks before you touch code.
+
+```bash
+/ecc:plan "description"              # scans codebase → lists risks → waits for your confirmation
+```
+
+Use when: bug fix, scoped refactor, known migration, extending an existing pattern — anything where *what* is settled but the work touches multiple files or has real complexity.
+
+**Path B — scope is unclear or stakeholders need to align**
+
+```bash
+/ecc:plan-prd "the idea"             # requirements doc → .claude/prds/*.prd.md
+                                     # captures: problem, evidence, users, hypothesis, MVP, out-of-scope
+# review and edit the PRD; align on what before anyone codes how
+/ecc:plan .claude/prds/name.prd.md   # implementation plan → .claude/plans/*.plan.md
+```
+
+Use when: scope is ambiguous, multiple stakeholders involved, or the feature is large enough that writing down *why* is cheaper than relitigating scope mid-build.
+
+---
+
+### 3. Implementation
+
+```bash
+tdd-workflow                         # RED → GREEN → REFACTOR
+```
+
+| What it enforces | Detail |
+|---|---|
+| Tests before code | Write failing tests first, implement minimally to pass |
+| Git checkpoints | Commit at RED, at GREEN, after refactor — clean rollback points at each stage |
+| 80% coverage | Unit + integration + E2E |
+
+Skipping `tdd-workflow` is fine if you write tests naturally alongside code. The skill adds value as an enforced guardrail — it doesn't add capability you don't already have.
+
+---
+
+### 4. Testing & review
+
+Run after implementation, before opening a PR:
+
+| Skill / command | What it does | When |
+|---|---|---|
+| `/ecc:code-review` | Delegates to `code-reviewer` agent — quality, maintainability, patterns | After every implementation |
+| `security-review` | OWASP-style checklist — secrets, injection, auth, input validation | Before any external-facing code ships |
+| `/ecc:quality-gate` | Verification gate: tests green, coverage ≥ 80%, lint clean | Final check before PR |
+
+---
+
+### 5. Debugging
+
+| Skill / command | What it does | When |
+|---|---|---|
+| `/ecc:build-fix` | Delegates to `build-error-resolver` — diagnoses and fixes build and type errors | On any build failure, before manual debugging |
+| `error-handling` | Reviews code for swallowed errors, missing propagation, and silent failures | When bugs are hard to reproduce or errors aren't surfacing cleanly |
+
+---
+
+### 6. Ship
+
+```bash
+/ecc:pr          # validates branch state, generates PR title/body from commits,
+                 # auto-links .claude/prds/ and .claude/plans/ artifacts in the PR body
+/ck save         # save session context before stopping
+```
+
+---
+
+Skip planning entirely only for trivial single-file changes with no downstream effects.
+Heuristic: if you'd naturally spend 2+ minutes thinking before coding, run at least Path A.
 
 ---
 
@@ -426,86 +529,6 @@ Merge of the SessionStart (ck), strategic-compact (PreToolUse), and Python quali
 > SessionStart/Stop/PreCompact entries don't collide with the ones above — the installer
 > writes to `~/.claude/hooks/hooks.json`, which Claude Code v2.1+ auto-loads. Don't duplicate
 > the same hook in both `settings.json` and `hooks.json`.
-
----
-
-## Part 9 — The actual workflows
-
-### One-time global setup (you do this once, ever)
-
-```text
-1. Install plugin + clone source        (Part 1)
-2. Copy rules: common + python           (Part 2)
-3. Install ck, continuous-learning-v2,
-   strategic-compact; run hooks-runtime  (Parts 3, 6)
-4. Write global ~/.claude/CLAUDE.md       (Part 7)
-5. Merge settings.json hooks             (Part 8)
-```
-
-### Starting a brand-new project
-
-```text
-codebase-onboarding      # (on a scaffold) -> generates project CLAUDE.md
-/ck init                 # register in Context Keeper
-/ecc:update-codemaps     # generate docs/CODEMAPS/ for cheap future navigation
-/ecc:plan "first feature"
-# ...build with tdd-workflow, code-review, quality-gate...
-/ck save                 # before you stop
-git add -A && git commit # save the actual code
-```
-
-### Picking up an EXISTING project not yet set up with ECC
-
-```text
-# Same as new — the setup is additive and non-destructive
-"onboard me to this codebase"   # codebase-onboarding -> guide + CLAUDE.md
-/ck init                        # register it
-/ecc:update-codemaps            # map it
-/ck save                        # save initial state
-# next session:
-/ck resume <project-name>       # caught up without re-reading everything
-/ecc:plan "first feature"       # codebase scan grounds Claude before coding
-```
-
-### Every subsequent session
-
-```text
-/ck resume <project-name>   # load context
-# ... work; /compact at phase boundaries ...
-/ck save                    # save context
-git commit                  # save code
-```
-
-### Per feature — three planning paths
-
-Pick based on how clear the scope is:
-
-**Path A — Non-trivial work, requirements already clear**
-
-"Requirements obvious" here means you know *what* needs to happen — not that the implementation is simple. You don't need to debate scope or align stakeholders; the question is just *how* to build it. `/plan` is still valuable because it scans the codebase for conventions to mirror and surfaces risks before you touch code.
-
-```
-search-first                              # check existing libs first
-/ecc:plan "specific requirement"          # implementation blueprint → confirm
-tdd-workflow                              # RED → GREEN → REFACTOR
-/ecc:code-review → security-review → /ecc:quality-gate
-/ecc:pr                                   # PR with auto-linked plan
-```
-Use when: bug fix, scoped refactor, known migration, adding a new language to a tokenizer, extending an existing pattern — anything where the *what* is settled but the work touches multiple files or has real complexity.
-
-**Path B — Standard (scope unclear or stakeholders involved)**
-```
-/ecc:plan-prd "the idea"                  # requirements doc → .claude/prds/*.prd.md
-# review + align stakeholders on the PRD
-/ecc:plan .claude/prds/name.prd.md        # implementation plan → .claude/plans/*.plan.md
-tdd-workflow
-/ecc:code-review → security-review → /ecc:quality-gate
-/ecc:pr                                   # PR auto-links both PRD + plan
-```
-Use when: scope needs defining first, multiple stakeholders, or medium-to-large feature with non-obvious trade-offs. The PRD is the gate — align on *what* before anyone codes *how*.
-
-
-Skip planning entirely only for trivial single-file changes. Heuristic: if you'd spend 2+ minutes thinking before coding, run at least Path A.
 
 ---
 

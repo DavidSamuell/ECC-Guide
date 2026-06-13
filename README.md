@@ -195,11 +195,14 @@ Verified names and what they actually do:
 |---|---|---|---|
 | `search-first` | skill | Research-before-coding: verify current library/API behavior before writing | Start of any unfamiliar work |
 | `/ecc:plan "desc"` | command | Restates requirements, scans codebase for conventions to mirror, lists risks, writes `.claude/plans/*.plan.md`, **waits for your confirmation before any code**. Runs inline by default — does not need the planner subagent | Start of any non-trivial feature |
+| `/ecc:plan-prd "idea"` | command | Requirements-phase only. Writes `.claude/prds/*.prd.md`: problem statement, evidence, users, hypothesis, MVP, explicit out-of-scope, delivery milestones. Does **not** design the implementation — that's `/plan`'s job. Pass the output path to `/plan` for the how. | When scope is unclear, contested, or stakeholders need to align before solutioning |
+| `prp-prd` → `prp-plan` → `prp-implement` | commands | Legacy deep PRP pipeline. `prp-prd` runs a full interrogation PRD → `.claude/PRPs/*.prd.md`. `prp-plan` does deep codebase analysis (8 search categories, 5 execution traces, real code snippets) → `.claude/PRPs/plans/*.plan.md`. `prp-implement` executes with gated validation loops. Maximally thorough but heavy. | XL features needing a fully self-contained, pattern-rich plan; or when the implementer has no live codebase access |
 | `tdd-workflow` | skill | Interfaces first → failing tests (RED) → minimal code (GREEN) → refactor → 80% coverage | Implement phase |
 | `api-design` | skill | REST design, pagination, error responses | Building an endpoint |
 | `/ecc:code-review` | command | Delegates to `code-reviewer` agent — quality + maintainability | After implementing |
 | `security-review` | skill | OWASP-style checklist | Before shipping |
 | `/ecc:quality-gate` | command | Verification gate: tests green, coverage, lint clean | Final check |
+| `/ecc:pr` | command | Creates a GitHub PR from the current branch. Validates branch state, analyzes commit history for title/body, discovers PR templates, **auto-links `.claude/prds/` and `.claude/plans/` artifacts** in the PR body. Replaces manual `gh pr create`. | After implementation — the final step in any planning pipeline |
 | `/ecc:build-fix` | command | Delegates to `build-error-resolver` | On build failure |
 
 Skip every framework pack you don't use (Django, Spring Boot, Laravel, Quarkus, NestJS, etc.)
@@ -474,12 +477,41 @@ git add -A && git commit # save the actual code
 git commit                  # save code
 ```
 
-### Per feature, decide whether to plan
+### Per feature — three planning paths
 
-Use `/ecc:plan` when the feature touches multiple files, the approach is unclear, or there
-are dependencies/integration points. Skip it for genuinely small, well-understood single-file
-changes. Heuristic: if you'd naturally spend 2+ minutes thinking before coding, let `/ecc:plan`
-do that thinking explicitly.
+Pick based on how clear the scope is:
+
+**Path A — Fast (requirements obvious, small/medium work)**
+```
+search-first                              # check existing libs first
+/ecc:plan "specific requirement"          # implementation blueprint → confirm
+tdd-workflow                              # RED → GREEN → REFACTOR
+/ecc:code-review → security-review → /ecc:quality-gate
+/ecc:pr                                   # PR with auto-linked plan
+```
+Use when: bug fix, scoped refactor, known migration, or requirements need no debate.
+
+**Path B — Standard (scope unclear or stakeholders involved)**
+```
+/ecc:plan-prd "the idea"                  # requirements doc → .claude/prds/*.prd.md
+# review + align stakeholders on the PRD
+/ecc:plan .claude/prds/name.prd.md        # implementation plan → .claude/plans/*.plan.md
+tdd-workflow
+/ecc:code-review → security-review → /ecc:quality-gate
+/ecc:pr                                   # PR auto-links both PRD + plan
+```
+Use when: scope needs defining first, multiple stakeholders, or medium-to-large feature with non-obvious trade-offs. The PRD is the gate — align on *what* before anyone codes *how*.
+
+**Path C — Deep (XL features, new subsystems, pattern-critical work)**
+```
+prp-prd                                   # full interrogation PRD → .claude/PRPs/*.prd.md
+prp-plan .claude/PRPs/name.prd.md         # codebase analysis → .claude/PRPs/plans/*.plan.md
+prp-implement .claude/PRPs/plans/name.plan.md   # gated implementation
+/ecc:pr
+```
+Use when: architectural change, new subsystem, or you need a maximally self-contained plan that captures every codebase pattern, naming convention, and gotcha so the implementer needs zero follow-up questions.
+
+Skip planning entirely only for trivial single-file changes. Heuristic: if you'd spend 2+ minutes thinking before coding, run at least Path A.
 
 ---
 

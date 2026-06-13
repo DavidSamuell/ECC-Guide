@@ -480,7 +480,10 @@ git commit                  # save code
 
 Pick based on how clear the scope is:
 
-**Path A — Fast (requirements obvious, small/medium work)**
+**Path A — Non-trivial work, requirements already clear**
+
+"Requirements obvious" here means you know *what* needs to happen — not that the implementation is simple. You don't need to debate scope or align stakeholders; the question is just *how* to build it. `/plan` is still valuable because it scans the codebase for conventions to mirror and surfaces risks before you touch code.
+
 ```
 search-first                              # check existing libs first
 /ecc:plan "specific requirement"          # implementation blueprint → confirm
@@ -488,7 +491,7 @@ tdd-workflow                              # RED → GREEN → REFACTOR
 /ecc:code-review → security-review → /ecc:quality-gate
 /ecc:pr                                   # PR with auto-linked plan
 ```
-Use when: bug fix, scoped refactor, known migration, or requirements need no debate.
+Use when: bug fix, scoped refactor, known migration, adding a new language to a tokenizer, extending an existing pattern — anything where the *what* is settled but the work touches multiple files or has real complexity.
 
 **Path B — Standard (scope unclear or stakeholders involved)**
 ```

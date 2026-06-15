@@ -253,10 +253,49 @@ Use when: bug fix, scoped refactor, known migration, extending an existing patte
 
 **Path B — scope is unclear or stakeholders need to align**
 
+> **Optional pre-step — `product-lens`** *(skip unless the "why" is in doubt)*
+>
+> Validates the problem before writing requirements. Runs a product diagnostic — who has
+> the pain, how bad, why now, what's the MVP, what's explicitly out of scope — and outputs a
+> `PRODUCT-BRIEF.md` with a go/no-go recommendation. If the answer is "no, don't build this,"
+> you've saved a sprint; if "yes," the brief feeds directly into `plan-prd`.
+>
+> **Use when:** the idea is still contested or fuzzy, you're not confident the problem is
+> worth solving, or stakeholders disagree on direction.
+> **Skip when:** you already have clear evidence the problem is real and everyone agrees on
+> what to build — even if the scope still needs sharpening.
+
+```bash
+product-lens                         # interactive diagnostic → PRODUCT-BRIEF.md
+                                     # validates: problem, users, evidence, MVP, anti-goals
+```
+
 ```bash
 /ecc:plan-prd "the idea"             # requirements doc → .claude/prds/*.prd.md
                                      # captures: problem, evidence, users, hypothesis, MVP, out-of-scope
 # review and edit the PRD; align on what before anyone codes how
+```
+
+> **Optional intermediate step — `product-capability`** *(skip for narrow, single-module work)*
+>
+> Bridges PRD intent and implementation constraints. Extracts the engineering invariants that
+> remain implicit after the PRD: trust boundaries, interface contracts, data model implications,
+> lifecycle transitions, rollout and migration requirements. These are the things that normally
+> live in senior-engineer memory and surface as blockers mid-PR.
+>
+> **Use when:** the feature crosses multiple modules or services, architecture decisions are
+> still fuzzy after the PRD, or you want a durable capability contract that survives across
+> sessions and team members. New subpackages, new language support, or any cross-cutting
+> architectural change are the clearest triggers.
+> **Skip when:** scope is narrow, touches one module, and architecture is already settled.
+
+```bash
+product-capability                   # PRD → capability contract with explicit constraints
+                                     # surfaces: invariants, interfaces, open blockers
+                                     # output → .claude/product/ or PRODUCT.md
+```
+
+```bash
 /ecc:plan .claude/prds/name.prd.md   # implementation plan → .claude/plans/*.plan.md
 ```
 
